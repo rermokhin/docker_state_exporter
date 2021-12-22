@@ -90,10 +90,13 @@ func (c *dockerHealthCollector) collectMetrics(ch chan<- prometheus.Metric) {
 
 		rep := regexp.MustCompile("[^a-zA-Z0-9_]")
 
-		for k, v := range info.Config.Labels {
-			label := strings.ToLower("container_label_" + k)
-			labels[rep.ReplaceAllLiteralString(label, "_")] = v
+		if addContainerLabels {
+			for k, v := range info.Config.Labels {
+				label := strings.ToLower("container_label_" + k)
+				labels[rep.ReplaceAllLiteralString(label, "_")] = v
+			}
 		}
+
 		labels["id"] = "/docker/" + info.ID
 		labels["image"] = info.Config.Image
 		labels["name"] = strings.TrimPrefix(info.Name, "/")
@@ -177,6 +180,8 @@ func errCheck(err error) {
 // Define flags.
 var (
 	address = flag.String("listen-address", ":8080", "The address to listen on for HTTP requests.")
+	cachePeriod = time.Duration(*flag.Int("cache-period", 1, "The period of time the collector will reuse the results of docker inspect before polling again, in seconds")) * time.Second
+	addContainerLabels = flag.BoolVar("add-container-labels", true, "Add labels from docker containers as metric labels")
 )
 
 func init() {
