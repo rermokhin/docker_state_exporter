@@ -18,12 +18,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-)
-
-const (
-	// cachePeriod indicates the period of time the collector will reuse the results of docker inspect.
-	cachePeriod = 1 * time.Second
 )
 
 type dockerHealthCollector struct {
@@ -90,7 +86,7 @@ func (c *dockerHealthCollector) collectMetrics(ch chan<- prometheus.Metric) {
 
 		rep := regexp.MustCompile("[^a-zA-Z0-9_]")
 
-		if addContainerLabels {
+		if *addContainerLabels {
 			for k, v := range info.Config.Labels {
 				label := strings.ToLower("container_label_" + k)
 				labels[rep.ReplaceAllLiteralString(label, "_")] = v
@@ -181,7 +177,7 @@ func errCheck(err error) {
 var (
 	address = flag.String("listen-address", ":8080", "The address to listen on for HTTP requests.")
 	cachePeriod = time.Duration(*flag.Int("cache-period", 1, "The period of time the collector will reuse the results of docker inspect before polling again, in seconds")) * time.Second
-	addContainerLabels = flag.BoolVar("add-container-labels", true, "Add labels from docker containers as metric labels")
+	addContainerLabels = flag.Bool("add-container-labels", true, "Add labels from docker containers as metric labels")
 )
 
 func init() {
@@ -189,7 +185,7 @@ func init() {
 	normalLogger = log.With(normalLogger, "severity", "info")
 	errorLogger = log.With(errorLogger, "timestamp", log.DefaultTimestampUTC)
 	errorLogger = log.With(errorLogger, "severity", "error")
-	prometheus.MustRegister(prometheus.NewBuildInfoCollector())
+	prometheus.MustRegister(collectors.NewBuildInfoCollector())
 }
 
 func main() {
