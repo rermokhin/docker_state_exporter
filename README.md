@@ -55,6 +55,25 @@ This exporter will export the following metrics.
 
 These metrics will be the same as the results of docker inspect.
 
+container_state_health_status:
+| Status | Code |
+| --- | ------ |
+| unhealthy | 0 |
+| none | 1 |
+| starting | 2 |
+| healthy | 3 |
+
+container_state_status:
+| Status | Code |
+| --- | ------ |
+| removing | 0 |
+| dead | 1 |
+| exited | 2 |
+| paused | 3 |
+| restarting | 4 |
+| created | 5 |
+| running | 6 |
+
 This exporter also exports the standard
 [Go Collector](https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#NewGoCollector)
 and [Process Collector](https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#NewProcessCollector).

@@ -103,24 +103,26 @@ func (c *dockerHealthCollector) collectMetrics(ch chan<- prometheus.Metric) {
 			}
 			return 0
 		}
-		mapcopy := func(src map[string]string) prometheus.Labels {
-			dst := map[string]string{}
-			for k, v := range labels {
-				dst[k] = v
-			}
-			return dst
+
+		containerHealthStatus := map[string]uint8 {
+			"unhealthy": 0,
+			"none": 1,
+			"starting": 2,
+			"healthy": 3,
+		}
+		
+		containerStatus := map[string]uint8 {
+			"removing": 0,
+			"dead": 1,
+			"exited": 2,
+			"paused": 3,
+			"restarting": 4,
+			"created": 5,
+			"running": 6,
 		}
 
-		for _, lv := range []string{"none", "starting", "healthy", "unhealthy"} {
-			tmpLabels := mapcopy(labels)
-			tmpLabels["status"] = lv
-			ch <- prometheus.MustNewConstMetric(healthStatusDesc.Desc(tmpLabels), prometheus.GaugeValue, b2f(info.State.Health.Status == lv))
-		}
-		for _, lv := range []string{"paused", "restarting", "running", "removing", "dead", "created", "exited"} {
-			tmpLabels := mapcopy(labels)
-			tmpLabels["status"] = lv
-			ch <- prometheus.MustNewConstMetric(statusDesc.Desc(tmpLabels), prometheus.GaugeValue, b2f(info.State.Status == lv))
-		}
+		ch <- prometheus.MustNewConstMetric(healthStatusDesc.Desc(labels), prometheus.GaugeValue, float64(containerHealthStatus[info.State.Health.Status]))
+		ch <- prometheus.MustNewConstMetric(statusDesc.Desc(labels), prometheus.GaugeValue, float64(containerStatus[info.State.Status]))
 		ch <- prometheus.MustNewConstMetric(oomkilledDesc.Desc(labels), prometheus.GaugeValue, b2f(info.State.OOMKilled))
 		startedat, err := time.Parse(time.RFC3339Nano, info.State.StartedAt)
 		errCheck(err)
